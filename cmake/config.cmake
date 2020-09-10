@@ -220,6 +220,12 @@ set(USE_ETHOSN OFF)
 # otherwise use ETHOSN_HW (OFF) to use the software test infrastructure
 set(USE_ETHOSN_HW OFF)
 
+# Whther to build with gigo support
+# Possible values:
+# - OFF: disable gigo support
+# - ON: call for gigo support
+set(USE_GIGO OFF)
+
 # Build ANTLR parser for Relay text format
 # Possible values:
 # - ON: enable ANTLR by searching default locations (cmake find_program for antlr4 and /usr/local for jar)
