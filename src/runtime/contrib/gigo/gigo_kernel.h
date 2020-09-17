@@ -31,9 +31,11 @@ namespace tvm {
 namespace runtime {
 namespace contrib {
 
-extern "C" TVM_DLL void gigo_conv2d(float* data, float* weights, float* out, int p_N_, int p_C_,
-                                    int p_H_, int p_W_, int p_O_, int p_G_, int p_Ph_, int p_Pw_,
-                                    int p_Kh_, int p_Kw_, int p_Sh_, int p_Sw_);
+extern "C" TVM_DLL void gigo_conv2d(float* data, float* weights, float* out, char* kernel_layout,
+                                    int data_N, int data_H,int data_W, int data_C,
+                                    int wght_O, int wght_H, int wght_W, int wght_I,
+                                    int group, int padding_T, int padding_L, int padding_B, int padding_R,
+                                    int stride_H, int stride_W);
 
 }  // namespace contrib
 }  // namespace runtime

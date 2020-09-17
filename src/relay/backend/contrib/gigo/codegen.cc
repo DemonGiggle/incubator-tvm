@@ -49,22 +49,59 @@ std::vector<std::string> Conv2d(const CallNode* call) {
   std::vector<std::string> args;
   const auto* conv2d_attr = call->attrs.as<Conv2DAttrs>();
   CHECK(conv2d_attr);
+  CHECK(conv2d_attr->data_layout == "NHWC")
+      << "data layout only supports NHWC, but we have " << conv2d_attr->data_layout;
 
   auto ishape = GetShape(call->args[0]->checked_type());
   auto wshape = GetShape(call->args[1]->checked_type());
 
-  // Args: N, C, H, W
+  args.push_back(conv2d_attr->kernel_layout);
+
+  // Args: Data dimensions: N, H, W, C
   for (auto s : ishape) {
     args.push_back(std::to_string(s));
   }
 
-  // Args: O, G, Ph, Pw, Kh, Kw, Sh, Sw
-  args.push_back(std::to_string(wshape[0]));
+  // Args: Weight HWIO (height, weight, in channels, channels)
+  int w_h, w_w, w_o, w_i;
+
+  w_h = wshape[0];
+  w_w = wshape[1];
+
+  if (conv2d_attr->kernel_layout == "HWOI") {
+      w_o = wshape[2];
+      w_i = wshape[3];
+  } else if (conv2d_attr->kernel_layout == "HWIO") {
+      w_o = wshape[3];
+      w_i = wshape[2];
+  } else {
+      LOG(ERROR) << "Unsupported kernel layout: " << conv2d_attr->kernel_layout;
+  }
+
+  // paddings
+  int pd_l, pd_r, pd_b, pd_t;
+
+  pd_l = pd_r = pd_b = pd_t = 0;
+  if (auto v = conv2d_attr->padding[0].as<IntImmNode>()->value != 0) {
+      pd_l = pd_r = pd_b = pd_t = v;
+  }
+  if (auto v = conv2d_attr->padding[1].as<IntImmNode>()->value != 0) {
+      pd_l = pd_r = v;
+  }
+  if (auto v = conv2d_attr->padding[3].as<IntImmNode>()->value != 0) {
+      pd_b = conv2d_attr->padding[2].as<IntImmNode>()->value;
+      pd_r = v;
+  }
+
+  args.push_back(std::to_string(w_o));
+  args.push_back(std::to_string(w_h));
+  args.push_back(std::to_string(w_w));
+  args.push_back(std::to_string(w_i));
   args.push_back(std::to_string(conv2d_attr->groups));
-  args.push_back(std::to_string(conv2d_attr->padding[0].as<IntImmNode>()->value));
-  args.push_back(std::to_string(conv2d_attr->padding[1].as<IntImmNode>()->value));
-  args.push_back(std::to_string(wshape[2]));
-  args.push_back(std::to_string(wshape[3]));
+  args.push_back(std::to_string(pd_t));
+  args.push_back(std::to_string(pd_l));
+  args.push_back(std::to_string(pd_b));
+  args.push_back(std::to_string(pd_r));
   args.push_back(std::to_string(conv2d_attr->strides[0].as<IntImmNode>()->value));
   args.push_back(std::to_string(conv2d_attr->strides[1].as<IntImmNode>()->value));
 
@@ -211,7 +248,9 @@ class CodegenBuilder : public MemoizedExprTranslator<std::vector<Output>>, publi
             }
 
             // Attach attribute arguments
-            for (size_t i = 0; i < attribute_args.size(); ++i) {
+            // special handling for the first argument
+            decl_stream << ", \"" << attribute_args[0] << "\"";
+            for (size_t i = 1; i < attribute_args.size(); ++i) {
                 decl_stream << ", " << attribute_args[i];
             }
             decl_stream << ");";
