@@ -254,6 +254,22 @@ void gigo_conv2d(float* data, float* weights, float* out, char* kernel_layout,
     free(new_data);
 }
 
+void gigo_quant_conv2d(float* data, float* weights, float* out, char* kernel_layout,
+                       int data_N, int data_H,int data_W, int data_C,
+                       int wght_O, int wght_H, int wght_W, int wght_I,
+                       int group, int padding_T, int padding_L, int padding_B, int padding_R,
+                       int stride_H, int stride_W) {
+    /**
+     * Just forward to conv2d for impl's sake
+     */
+    gigo_conv2d(data, weights, out, kernel_layout,
+            data_N, data_H, data_W, data_C,
+            wght_O, wght_H, wght_W, wght_I,
+            group, padding_T, padding_L, padding_B, padding_R,
+            stride_H, stride_W);
+}
+
+
 } // namespace gigo
 } // namespace runtime
 } // namespace tvm

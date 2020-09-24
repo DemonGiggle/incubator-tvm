@@ -23,6 +23,10 @@ import tvm.ir
 def conv2d(attrs, args):
     return True
 
+@tvm.ir.register_op_attr("qnn.conv2d", "target.gigo")
+def qnn_conv2d(attrs, args):
+    return True
+
 def partition_for_gigo(mod):
     """Perform graph partition to offload supported operators to gigo hw
 

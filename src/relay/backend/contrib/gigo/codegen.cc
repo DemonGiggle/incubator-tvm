@@ -108,6 +108,13 @@ std::vector<std::string> Conv2d(const CallNode* call) {
   return args;
 }
 
+std::vector<std::string> QuantConv2d(const CallNode* call) {
+    /**
+     * Just use nn version for quantized version, for prototype of concept
+     */
+    return Conv2d(call);
+}
+
 } // namespace gigo_ops
 
 /*!
@@ -153,6 +160,28 @@ class CodegenBuilder : public MemoizedExprTranslator<std::vector<Output>>, publi
             return {output};
         }
 
+        std::vector<Output> VisitExpr_(const ConstantNode* cn) final {
+            Output output;
+            // Get const: static_cast<float*>(dnnl_0_consts[0]->data)
+            output.name = CreateDataReference(ext_func_id_, const_idx_);
+            output.dtype = "float";
+
+            // Generate the global variable for needed ndarrays
+            if (const_array_name_.empty()) {
+                const_array_name_ = CreateNDArrayPool(ext_func_id_);
+                std::string checker = CreateInitChecker(ext_func_id_);
+                ext_func_body_.insert(ext_func_body_.begin(), checker);
+            }
+
+            // Give the ndarray a unique name to ease the initialization of it at
+            // runtime.
+            std::string const_var_name = CreateConstVar(ext_func_id_, const_idx_);
+            const_vars_.push_back(const_var_name);
+            const_idx_++;
+
+            return {output};
+        }
+
         std::string JIT(const std::vector<Output>& out) {
             return JitImpl(ext_func_id_, ext_func_args_, buf_decl_, ext_func_body_, const_array_name_, out);
         }
@@ -171,6 +200,7 @@ class CodegenBuilder : public MemoizedExprTranslator<std::vector<Output>>, publi
             using ArgFunType = std::function<std::vector<std::string>(const CallNode*)>;
             static const std::map<std::string, std::pair<std::string, ArgFunType>> op_map = {
                 {"nn.conv2d", {"gigo_conv2d", gigo_ops::Conv2d}},
+                {"qnn.conv2d", {"gigo_quant_conv2d", gigo_ops::QuantConv2d}},
             // TODO: add more supported ops
             //    {"nn.dense", {"gigo_dense", gigo_ops::Dense}},
             //    {"nn.relu", {"gigo_relu", gigo_ops::Relu}},
