@@ -14,12 +14,14 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-# pylint: disable=wildcard-import
-"""Contrib modules."""
-from .register import get_pattern_table, register_pattern_table
 
-from .arm_compute_lib import *
-from .dnnl import *
-from .coreml import *
-from .ethosn import *
-from .gigo import *
+if(USE_GIGO)
+    file(GLOB GIGO_RELAY_CONTRIB_SRC src/relay/backend/contrib/gigo/*.cc)
+    list(APPEND COMPILER_SRCS ${GIGO_RELAY_CONTRIB_SRC})
+
+    file(GLOB GIGO_RUNTIME_CONTRIB_SRC
+      CONFIGURE_DEPENDS src/runtime/contrib/gigo/*.cc)
+    list(APPEND RUNTIME_SRCS ${GIGO_RUNTIME_CONTRIB_SRC})
+
+    message(STATUS "Build with GIGO runtime")
+endif()

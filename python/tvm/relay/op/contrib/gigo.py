@@ -14,12 +14,28 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-# pylint: disable=wildcard-import
-"""Contrib modules."""
-from .register import get_pattern_table, register_pattern_table
+# pylint: disable=invalid-name, unused-argument
+"""GIGO supported operators."""
+from tvm.relay import transform
+import tvm.ir
 
-from .arm_compute_lib import *
-from .dnnl import *
-from .coreml import *
-from .ethosn import *
-from .gigo import *
+@tvm.ir.register_op_attr("nn.conv2d", "target.gigo")
+def conv2d(attrs, args):
+    return True
+
+def partition_for_gigo(mod):
+    """Perform graph partition to offload supported operators to gigo hw
+
+    Parameters
+    ----------
+    mod : Module
+        The module to run passes on.
+
+    Returns
+    -------
+    ret : annotated and partitioned module.
+    """
+    seq = tvm.transform.Sequential([transform.AnnotateTarget('gigo'),
+                                    transform.MergeCompilerRegions(),
+                                    transform.PartitionGraph()])
+    return seq(mod)
