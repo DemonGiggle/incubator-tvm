@@ -37,6 +37,12 @@ extern "C" TVM_DLL void gigo_conv2d(float* data, float* weights, float* out, cha
                                     int group, int padding_T, int padding_L, int padding_B, int padding_R,
                                     int stride_H, int stride_W);
 
+extern "C" TVM_DLL void gigo_quant_conv2d(float* data, float* weights, float* out, char* kernel_layout,
+                                    int data_N, int data_H,int data_W, int data_C,
+                                    int wght_O, int wght_H, int wght_W, int wght_I,
+                                    int group, int padding_T, int padding_L, int padding_B, int padding_R,
+                                    int stride_H, int stride_W);
+
 }  // namespace contrib
 }  // namespace runtime
 }  // namespace tvm

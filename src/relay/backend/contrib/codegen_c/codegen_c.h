@@ -279,6 +279,8 @@ class CodegenCBase {
       dtype = "float";
     } else if (runtime::TypeMatch(ttype->dtype, kDLInt, 32)) {
       dtype = "int";
+    } else if (runtime::TypeMatch(ttype->dtype, kDLUInt, 8)) {
+      dtype = "int";  // FIXME: maybe choose a better one
     } else if (runtime::TypeMatch(ttype->dtype, kDLInt, 64)) {
       dtype = "int64_t";
     } else {
